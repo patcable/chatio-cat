@@ -26,7 +26,7 @@ Create a trigger for the function, use "EventBridge" and set some kind of schedu
 ```
 {
     "channel_id": "ID of channel you wish to clean up",
-    "message_duration": "how long messages should last in the format of 0d0h0m"
+    "message_duration": "how long messages should last in the format of 0h0m0s"
 }
 ```
 
@@ -34,7 +34,7 @@ For example, to delete messages after 24h in channel 1431739945235779604 you'd p
 ```
 {
     "channel_id": "1431739945235779604",
-    "message_duration": "1d0h0m"
+    "message_duration": "24h"
 }
 ```
 
