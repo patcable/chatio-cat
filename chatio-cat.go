@@ -31,15 +31,15 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 
 	msgDuration, err := time.ParseDuration(durationString)
 	if err != nil {
-		fmt.Printf("wrong time format (need to be a string in format 0h0m0s)")
+		fmt.Printf("[chatio-cat][%s] Wrong time format (need to be a string in format 0h0m0s)", channel)
 		return err
 	}
 
-	fmt.Printf("Chatio:3 - Going to remove messages older than %s from %s\n", durationString, channel)
+	fmt.Printf("[chatio-cat][%s] Going to remove messages older than %s.\n", channel, durationString)
 
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
-		fmt.Printf("sorry: %s\n", err)
+		fmt.Printf("[chatio-cat][%s] cant initialize client: %s\n", channel, err)
 		return err
 	}
 
@@ -48,7 +48,7 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 	for {
 		msgs, err := dg.ChannelMessages(channel, messageCount, before, "", "")
 		if err != nil {
-			fmt.Printf("sorry: %s", err)
+			fmt.Printf("[chatio-cat][%s] cant collect messages: %s\n", channel, err)
 			return err
 		}
 		allmessages = append(allmessages, msgs...)
@@ -72,17 +72,19 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 	}
 
 	if len(toDelete) > 0 {
-		fmt.Printf("Removing %d messages from %s\n", len(toDelete), channel)
+		fmt.Printf("[chatio-cat][%s] Removing %d messages.\n", channel, len(toDelete))
 
 		// bulkdelete api only takes 100 messages
 		chunked := slices.Chunk(toDelete, 100)
 		for messagesToDelete := range chunked {
 			err = dg.ChannelMessagesBulkDelete(channel, messagesToDelete)
 			if err != nil {
-				fmt.Printf("sorry: %s", err)
+				fmt.Printf("[chatio-cat][%s] cant delete messages: %s", channel, err)
 				return err
 			}
 		}
+	} else {
+		fmt.Printf("[chatio-cat][%s] Nothing to delete.\n", channel)
 	}
 
 	return nil
