@@ -31,24 +31,29 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 
 	msgDuration, err := time.ParseDuration(durationString)
 	if err != nil {
-		fmt.Printf("[chatio-cat][%s] Wrong time format (need to be a string in format 0h0m0s)", channel)
+		fmt.Printf("[chatio-cat][%s][] Wrong time format (need to be a string in format 0h0m0s)", channel)
 		return err
 	}
-
-	fmt.Printf("[chatio-cat][%s] Going to remove messages older than %s.\n", channel, durationString)
 
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
-		fmt.Printf("[chatio-cat][%s] cant initialize client: %s\n", channel, err)
+		fmt.Printf("[chatio-cat][%s][] cant initialize client: %s\n", channel, err)
 		return err
 	}
+
+	channelInfo, err := dg.Channel(channel)
+	if err != nil {
+		fmt.Printf("[chatio-cat][%s][] cant resolve channel: %s\n", channel, err)
+	}
+
+	fmt.Printf("[chatio-cat][%s][%s] Going to remove messages older than %s.\n", channel, channelInfo.Name, durationString)
 
 	var allmessages []*discordgo.Message
 	var before string
 	for {
 		msgs, err := dg.ChannelMessages(channel, messageCount, before, "", "")
 		if err != nil {
-			fmt.Printf("[chatio-cat][%s] cant collect messages: %s\n", channel, err)
+			fmt.Printf("[chatio-cat][%s][%s] cant collect messages: %s\n", channel, channelInfo.Name, err)
 			return err
 		}
 		allmessages = append(allmessages, msgs...)
@@ -72,19 +77,19 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 	}
 
 	if len(toDelete) > 0 {
-		fmt.Printf("[chatio-cat][%s] Removing %d messages.\n", channel, len(toDelete))
+		fmt.Printf("[chatio-cat][%s][%s] Removing %d messages.\n", channel, channelInfo.Name, len(toDelete))
 
 		// bulkdelete api only takes 100 messages
 		chunked := slices.Chunk(toDelete, 100)
 		for messagesToDelete := range chunked {
 			err = dg.ChannelMessagesBulkDelete(channel, messagesToDelete)
 			if err != nil {
-				fmt.Printf("[chatio-cat][%s] cant delete messages: %s", channel, err)
+				fmt.Printf("[chatio-cat][%s][%s] cant delete messages: %s", channel, channelInfo.Name, err)
 				return err
 			}
 		}
 	} else {
-		fmt.Printf("[chatio-cat][%s] Nothing to delete.\n", channel)
+		fmt.Printf("[chatio-cat][%s][%s] Nothing to delete.\n", channel, channelInfo.Name)
 	}
 
 	return nil
