@@ -71,15 +71,17 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 		}
 	}
 
-	fmt.Printf("Removing %d messages from %s\n", len(toDelete), channel)
+	if len(toDelete) > 0 {
+		fmt.Printf("Removing %d messages from %s\n", len(toDelete), channel)
 
-	// bulkdelete api only takes 100 messages
-	chunked := slices.Chunk(toDelete, 100)
-	for messagesToDelete := range chunked {
-		err = dg.ChannelMessagesBulkDelete(channel, messagesToDelete)
-		if err != nil {
-			fmt.Printf("sorry: %s", err)
-			return err
+		// bulkdelete api only takes 100 messages
+		chunked := slices.Chunk(toDelete, 100)
+		for messagesToDelete := range chunked {
+			err = dg.ChannelMessagesBulkDelete(channel, messagesToDelete)
+			if err != nil {
+				fmt.Printf("sorry: %s", err)
+				return err
+			}
 		}
 	}
 
