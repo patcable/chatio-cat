@@ -35,6 +35,8 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 		return err
 	}
 
+	fmt.Printf("Chatio:3 - Going to remove messages older than %s from %s\n", durationString, channel)
+
 	dg, err := discordgo.New("Bot " + token)
 	if err != nil {
 		fmt.Printf("sorry: %s\n", err)
@@ -51,7 +53,7 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 		}
 		allmessages = append(allmessages, msgs...)
 
-		if len(msgs) == (messageCount - 1) {
+		if len(msgs) == messageCount {
 			// there may be more, so i guess get the next batch?
 			before = msgs[messageCount-1].ID
 		} else {
@@ -68,6 +70,8 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 			//fmt.Printf("[%s] @ %s: %s\n", v.Author, v.Timestamp)
 		}
 	}
+
+	fmt.Printf("Removing %d messages from %s\n", len(toDelete), channel)
 
 	// bulkdelete api only takes 100 messages
 	chunked := slices.Chunk(toDelete, 100)
