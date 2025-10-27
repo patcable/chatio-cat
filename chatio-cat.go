@@ -48,7 +48,7 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 
 	fmt.Printf("[chatio-cat][%s][%s] Going to remove messages older than %s.\n", channel, channelInfo.Name, durationString)
 
-	var allmessages []*discordgo.Message
+	var toDelete []string
 	var before string
 	for {
 		msgs, err := dg.ChannelMessages(channel, messageCount, before, "", "")
@@ -56,7 +56,14 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 			fmt.Printf("[chatio-cat][%s][%s] cant collect messages: %s\n", channel, channelInfo.Name, err)
 			return err
 		}
-		allmessages = append(allmessages, msgs...)
+
+		for _, v := range msgs {
+			if time.Since(v.Timestamp) > msgDuration {
+				toDelete = append(toDelete, v.ID)
+				// useful for troubleshooting but you dont actually need it
+				//fmt.Printf("[%s] @ %s: %s\n", v.Author, v.Timestamp)
+			}
+		}
 
 		if len(msgs) == messageCount {
 			// there may be more, so i guess get the next batch?
@@ -64,15 +71,6 @@ func handleRequest(ctx context.Context, event json.RawMessage) error {
 		} else {
 			// there are less, lets assume we caught em all?
 			break
-		}
-	}
-
-	var toDelete []string
-	for _, v := range allmessages {
-		if time.Since(v.Timestamp) > msgDuration {
-			toDelete = append(toDelete, v.ID)
-			// useful for troubleshooting but you dont actually need it
-			//fmt.Printf("[%s] @ %s: %s\n", v.Author, v.Timestamp)
 		}
 	}
 
